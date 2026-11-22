@@ -902,16 +902,31 @@
       }
     }
 
-    // FIREBASE REALTIME SYNC (Optional 0đ)
+    // FIREBASE REALTIME SYNC (0đ Google Firebase cho cả phòng)
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAvzF8DFVnaeLtXtcdrwxCBk0MOSc4_c9g",
+      authDomain: "do-rac-ktx.firebaseapp.com",
+      projectId: "do-rac-ktx",
+      storageBucket: "do-rac-ktx.firebasestorage.app",
+      messagingSenderId: "72077743230",
+      appId: "1:72077743230:web:39776acb4097ddd3d4b42f",
+      measurementId: "G-DF3KSN800L"
+    };
+
     let firebaseDb = null;
     let firebaseUnsubscribe = null;
+    let firestoreDocFn = null;
+    let firestoreSetDocFn = null;
 
     async function setupFirebase(configObj) {
-      if (!configObj) return;
+      if (!configObj || !configObj.apiKey) return;
       try {
         const { initializeApp, getApps } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
         const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
         
+        firestoreDocFn = doc;
+        firestoreSetDocFn = setDoc;
+
         let app = getApps().length ? getApps()[0] : initializeApp(configObj);
         firebaseDb = getFirestore(app);
 
@@ -931,26 +946,48 @@
               };
               localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
               renderAll();
-              document.getElementById('syncBanner').classList.remove('hidden');
+              const banner = document.getElementById('syncBanner');
+              if (banner) {
+                banner.classList.remove('hidden');
+                const textEl = document.getElementById('syncBannerText');
+                if (textEl) textEl.textContent = '🟢 Đang đồng bộ Realtime cả phòng (6/6 đứa dùng chung)!';
+              }
+            }
+          } else {
+            // Document chưa có trên Firestore -> Khởi tạo dữ liệu mẫu lên đám mây
+            setDoc(roomDocRef, {
+              members: appState.members,
+              settings: appState.settings,
+              logs: appState.logs,
+              lastUpdated: new Date().toISOString()
+            });
+            const banner = document.getElementById('syncBanner');
+            if (banner) {
+              banner.classList.remove('hidden');
+              const textEl = document.getElementById('syncBannerText');
+              if (textEl) textEl.textContent = '🟢 Đang đồng bộ Realtime cả phòng (6/6 đứa dùng chung)!';
             }
           }
         }, (err) => {
           console.warn('Firebase sync listener warning:', err);
         });
 
-        showToast('Kết nối Firebase thành công!', '🔥');
+        const banner = document.getElementById('syncBanner');
+        if (banner) {
+          banner.classList.remove('hidden');
+          const textEl = document.getElementById('syncBannerText');
+          if (textEl) textEl.textContent = '🟢 Đang đồng bộ Realtime cả phòng (6/6 đứa dùng chung)!';
+        }
       } catch (err) {
         console.error('Firebase setup failed:', err);
-        showToast('Lỗi cấu hình Firebase, vui lòng kiểm tra lại!', '⚠️');
       }
     }
 
     async function syncWithFirebase() {
-      if (!firebaseDb) return;
+      if (!firebaseDb || !firestoreDocFn || !firestoreSetDocFn) return;
       try {
-        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const roomDocRef = doc(firebaseDb, 'ktx_trash_rooms', 'room_main');
-        await setDoc(roomDocRef, {
+        const roomDocRef = firestoreDocFn(firebaseDb, 'ktx_trash_rooms', 'room_main');
+        await firestoreSetDocFn(roomDocRef, {
           members: appState.members,
           settings: appState.settings,
           logs: appState.logs,
@@ -2249,10 +2286,14 @@
     renderAll();
     setInterval(updateCountdown, 1000);
 
-    // Auto connect Firebase if saved
-    const savedFb = localStorage.getItem(FIREBASE_KEY);
-    if (savedFb) {
-      try { setupFirebase(JSON.parse(savedFb)); } catch (e) {}
+    // Auto connect Firebase for all roommates
+    if (DEFAULT_FIREBASE_CONFIG && DEFAULT_FIREBASE_CONFIG.apiKey) {
+      setupFirebase(DEFAULT_FIREBASE_CONFIG);
+    } else {
+      const savedFb = localStorage.getItem(FIREBASE_KEY);
+      if (savedFb) {
+        try { setupFirebase(JSON.parse(savedFb)); } catch (e) {}
+      }
     }
 
     // Modal Helpers
