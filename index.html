@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chấm Công Đổ Rác KTX - Ai Quên Bị Phạt!</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗑️</text></svg>">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            trash: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            }
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+    }
+    .neon-border-green {
+      box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.35);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    .neon-border-red {
+      box-shadow: 0 0 20px -3px rgba(239, 68, 68, 0.4);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    .neon-border-amber {
+      box-shadow: 0 0 20px -3px rgba(245, 158, 11, 0.35);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+    /* Hide scrollbars but allow scrolling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white pb-24 md:pb-10">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/20">
+          🗑️
+        </div>
+        <div>
+          <h1 id="headerRoomName" class="font-bold text-base md:text-lg text-white leading-tight">Phòng 402 - Biệt Đội KTX</h1>
+          <p id="headerSlogan" class="text-xs text-slate-400 truncate max-w-[200px] md:max-w-xs">Ai quên đổ rác - Cả phòng tế sống!</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Nút Copy link gửi Zalo cả phòng -->
+        <button id="btnShareRoomLink" class="bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 px-2.5 py-1 rounded-lg flex items-center space-x-1.5 text-blue-400 font-bold text-xs transition" title="Sao chép link gửi cho cả phòng mở">
+          <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Gửi link phòng</span>
+        </button>
+        <!-- Quỹ phòng badge -->
+        <div class="bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg flex items-center space-x-1.5 text-amber-400 font-bold text-xs md:text-sm">
+          <span>💰</span>
+          <span id="headerFund">40.000đ</span>
+        </div>
+        <!-- Toggle Sound -->
+        <button id="btnSoundToggle" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Bật/Tắt âm thanh">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-4xl mx-auto w-full px-4 pt-4 flex-1">
+
+    <!-- ALERT BANNER (If firebase sync error or warning) -->
+    <div id="syncBanner" class="hidden mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="syncBannerText">Đang đồng bộ Realtime Firebase với cả phòng!</span>
+      </div>
+      <button onclick="document.getElementById('syncBanner').classList.add('hidden')" class="text-slate-400 hover:text-white">&times;</button>
+    </div>
+
+    <!-- TAB 1: HÔM NAY (DUTY TODAY) -->
+    <section id="tab-today" class="tab-content space-y-4">
+      <!-- Main Duty Card -->
+      <div id="todayCard" class="glass-card rounded-2xl p-6 text-center relative overflow-hidden transition-all duration-300">
+        <!-- Status Badge -->
+        <div class="flex justify-between items-center mb-4">
+          <span id="todayDateDisplay" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-800 text-slate-300">
+            Hôm nay, 22/11/2026
+          </span>
+          <span id="todayStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping mr-1"></span>
+            Chưa đổ rác!
+          </span>
+        </div>
+
+        <!-- Big Avatar & Victim Info -->
+        <div class="relative inline-block my-2">
+          <div id="todayAvatarRing" class="w-28 h-28 mx-auto rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-1 shadow-2xl flex items-center justify-center">
+            <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-5xl select-none" id="todayAvatar">
+              🤠
+            </div>
+          </div>
+          <div id="todayStreakBadge" class="absolute -bottom-1 -right-1 bg-orange-500 text-white font-extrabold text-xs px-2.5 py-0.5 rounded-full shadow-lg border-2 border-slate-900 flex items-center space-x-1" title="Số ca trực liên tiếp hoàn thành đúng hạn">
+            <span>🔥</span><span id="todayStreakCount">4 ca liên tiếp</span>
+          </div>
+        </div>
+
+        <h2 id="todayName" class="text-2xl font-black text-white mt-3">Nguyễn Văn Hùng</h2>
+        <p id="todayNickname" class="text-emerald-400 font-semibold text-sm">"Hùng Hăng Hái"</p>
+
+        <!-- Countdown / Deadline -->
+        <div class="my-5 max-w-sm mx-auto bg-slate-800/80 rounded-xl p-3 border border-slate-700/60">
+          <div class="flex justify-between items-center text-xs text-slate-400 mb-1.5">
+            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Hạn chót: <strong id="todayDeadlineTime" class="text-white">22:00</strong></span>
+            <span id="countdownLabel" class="font-bold text-amber-400">Còn 01:24:10</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-700 rounded-full overflow-hidden">
+            <div id="countdownProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-amber-500 transition-all duration-1000" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto pt-2">
+          <!-- Main Check-in Button -->
+          <button id="btnCheckIn" class="sm:col-span-2 w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-base shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition transform active:scale-98">
+            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+            <span>TÔI ĐÃ ĐỔ RÁC RỒI! (Check-in)</span>
+          </button>
+
+          <!-- Réo tên vào Zalo -->
+          <button id="btnRemindZalo" class="w-full py-2.5 px-3 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-bold text-sm flex items-center justify-center space-x-2 transition">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Réo tên Zalo</span>
+          </button>
+
+          <!-- Đổi ca trực -->
+          <button id="btnSwapDuty" class="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-sm flex items-center justify-center space-x-2 transition">
+            <i data-lucide="repeat" class="w-4 h-4"></i>
+            <span>Đổi ca / Nhờ gánh</span>
+          </button>
+        </div>
+
+        <!-- Completed Proof Preview (Hidden by default until completed) -->
+        <div id="todayCompletedBox" class="hidden mt-5 p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-left">
+          <div class="flex items-center space-x-2 text-emerald-400 font-bold text-sm mb-2">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>Đã hoàn thành lúc <span id="completedTimeText">20:30</span></span>
+          </div>
+          <p id="completedNoteText" class="text-xs text-slate-300 italic mb-2">"Đã vứt sạch thùng, không còn một cọng rác!"</p>
+          <div id="completedImageContainer" class="hidden">
+            <img id="completedImagePreview" class="w-full max-h-48 object-cover rounded-lg border border-slate-700" alt="Bằng chứng đổ rác" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Room Quick-Stats Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-card rounded-xl p-3 text-center">
+          <span class="text-2xl">🔥</span>
+          <div class="text-xs text-slate-400 mt-1">Chuỗi cao nhất</div>
+          <div id="statBestStreak" class="font-extrabold text-white text-base">Nam Anime (5)</div>
+        </div>
+        <div class="glass-card rounded-xl p-3 text-center">
+          <span class="text-2xl">🚨</span>
+          <div class="text-xs text-slate-400 mt-1">Con báo của phòng</div>
+          <div id="statTopMissed" class="font-extrabold text-red-400 text-base">Tuấn Báo (3 lần)</div>
+        </div>
+        <div class="glass-card rounded-xl p-3 text-center">
+          <span class="text-2xl">💸</span>
+          <div class="text-xs text-slate-400 mt-1">Tiền phạt 1 lần</div>
+          <div id="statFineAmount" class="font-extrabold text-amber-400 text-base">10.000đ</div>
+        </div>
+        <div class="glass-card rounded-xl p-3 text-center">
+          <span class="text-2xl">🍲</span>
+          <div class="text-xs text-slate-400 mt-1">Quỹ lẩu hiện có</div>
+          <div id="statFundAmount" class="font-extrabold text-emerald-400 text-base">40.000đ</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: LỊCH TRỰC & XOAY TUA (SCHEDULE) -->
+    <section id="tab-schedule" class="tab-content hidden space-y-4">
+      <!-- Calendar View Card -->
+      <div class="glass-card rounded-2xl p-5">
+        <!-- View Mode Switcher & Controls -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div class="flex items-center space-x-2">
+            <button id="btnViewWeek" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-emerald-600 text-white shadow transition flex items-center gap-1.5">
+              <i data-lucide="columns-3" class="w-3.5 h-3.5"></i> Lịch Tuần
+            </button>
+            <button id="btnViewMonth" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5">
+              <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> Lịch Tháng
+            </button>
+          </div>
+          <!-- Navigation (Prev, Current Title, Next) -->
+          <div class="flex items-center justify-between sm:justify-end space-x-2">
+            <button id="btnCalPrev" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs">◀</button>
+            <span id="calCurrentPeriodTitle" class="font-bold text-sm text-white min-w-[130px] text-center">Tuần này</span>
+            <button id="btnCalNext" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs">▶</button>
+            <button id="btnCalToday" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-[11px] font-semibold">Hôm nay</button>
+          </div>
+        </div>
+
+        <!-- Week View: Google Calendar 7-Column Board -->
+        <div id="calendarWeekContainer" class="overflow-x-auto pb-2">
+          <div class="min-w-[620px] bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
+            <!-- 7 Column Header (Google Calendar Style) -->
+            <div id="calendarWeekHeader" class="grid grid-cols-7 border-b border-slate-800 text-center py-2 bg-slate-800/50">
+              <!-- Populated by JS -->
+            </div>
+            <!-- 7 Column Event Slots -->
+            <div id="calendarWeekGrid" class="grid grid-cols-7 divide-x divide-slate-800/80 min-h-[150px] p-1.5 bg-slate-900/40">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Month View: Google Calendar Monthly Table Grid -->
+        <div id="calendarMonthContainer" class="hidden overflow-x-auto pb-2">
+          <div class="min-w-[620px] bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden shadow-inner">
+            <!-- Month 7 Column Header -->
+            <div class="grid grid-cols-7 border-b border-slate-800 text-center py-2 text-xs font-bold bg-slate-800/50">
+              <div class="text-emerald-400">Thứ 2</div>
+              <div class="text-slate-300">Thứ 3</div>
+              <div class="text-slate-300">Thứ 4</div>
+              <div class="text-slate-300">Thứ 5</div>
+              <div class="text-slate-300">Thứ 6</div>
+              <div class="text-slate-300">Thứ 7</div>
+              <div class="text-red-400">Chủ Nhật</div>
+            </div>
+            <!-- Month Days Grid with borders like GCal -->
+            <div id="calendarMonthGrid" class="grid grid-cols-7 divide-x divide-y divide-slate-800/80 border-t border-slate-800/80">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Date Detail Popover / Modal (When clicking a day in Calendar view) -->
+        <div id="calDateDetailBox" class="hidden mt-4 p-4 rounded-xl bg-slate-800/95 border border-slate-700 text-xs space-y-3 shadow-xl">
+          <div class="flex items-center justify-between">
+            <span id="calDetailDate" class="font-bold text-white text-sm">22/11/2026</span>
+            <span id="calDetailStatus" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold">Chưa đổ</span>
+          </div>
+          <div class="flex items-center space-x-2.5">
+            <span id="calDetailAvatar" class="text-3xl">🤠</span>
+            <div>
+              <div id="calDetailName" class="font-bold text-white text-sm">Nguyễn Văn Hùng</div>
+              <div id="calDetailNickname" class="text-emerald-400 text-xs">"Hùng Hăng Hái"</div>
+            </div>
+          </div>
+          <!-- Fast Reassign / Assign dropdown -->
+          <div class="pt-2.5 border-t border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="text-slate-300 font-semibold text-xs flex items-center gap-1">
+              <i data-lucide="user-check" class="w-3.5 h-3.5 text-blue-400"></i>
+              Đổi người trực ngày này:
+            </span>
+            <div class="flex items-center gap-2">
+              <select id="selectReassignDutyMember" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-white text-xs focus:outline-none focus:border-blue-500">
+                <!-- Populated by JS -->
+              </select>
+              <button id="btnConfirmReassignDate" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow transition">
+                Cập nhật
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manage Roommates List -->
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+              Danh sách thành viên & Thứ tự
+            </h3>
+            <p class="text-xs text-slate-400">Đổi thứ tự để thay đổi vòng xoay trực nhật</p>
+          </div>
+          <button id="btnOpenAddMember" class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+            Thêm bạn
+          </button>
+        </div>
+
+        <div id="memberListContainer" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: VÒNG QUAY ĐỊNH MỆNH (ROULETTE) -->
+    <section id="tab-roulette" class="tab-content hidden space-y-4">
+      <div class="glass-card rounded-2xl p-6 text-center">
+        <div class="max-w-md mx-auto">
+          <span class="inline-block px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold mb-2">
+            🎡 Vòng quay sinh tử KTX
+          </span>
+          <h3 class="text-xl font-black text-white">Thùng Rác Đầy Đột Xuất?</h3>
+          <p class="text-xs text-slate-400 mt-1 mb-5">
+            2h sáng bốc mùi vỏ sầu riêng/hộp cơm? Bấm quay số định mệnh để chọn 1 đứa đi đổ rác gấp!
+          </p>
+
+          <!-- Wheel Container -->
+          <div class="relative w-72 h-72 mx-auto my-4">
+            <!-- Pointer Arrow -->
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 text-red-500 filter drop-shadow-md">
+              <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-red-500"></div>
+            </div>
+            <!-- Canvas -->
+            <canvas id="rouletteCanvas" width="288" height="288" class="rounded-full shadow-2xl border-4 border-slate-700 bg-slate-900"></canvas>
+            <!-- Center Button / Hub -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-slate-900 border-2 border-emerald-400 shadow-xl flex items-center justify-center text-xl select-none z-10 pointer-events-none">
+              🗑️
+            </div>
+          </div>
+
+          <!-- Spin Button -->
+          <div class="pt-3">
+            <button id="btnSpinWheel" class="w-full max-w-xs py-3 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-extrabold text-base shadow-lg shadow-purple-500/30 transition transform active:scale-95 flex items-center justify-center space-x-2 mx-auto">
+              <span>🎯 QUAY ĐỊNH MỆNH!</span>
+            </button>
+          </div>
+
+          <!-- Winner Box (Hidden until spin finishes) -->
+          <div id="rouletteWinnerBox" class="hidden mt-6 p-4 rounded-xl bg-gradient-to-tr from-purple-900/60 to-pink-900/60 border border-purple-500/50 text-center animate-bounce-slow">
+            <div class="text-xs font-bold text-pink-300 uppercase tracking-widest mb-1">Nạn nhân xấu số đêm nay:</div>
+            <div id="rouletteWinnerName" class="text-2xl font-black text-white">Lê Minh Tuấn 🦹‍♂️</div>
+            <p class="text-xs text-slate-300 mt-1">Đề nghị đồng chí mang ngay bịch rác ra khỏi phòng!</p>
+            <button id="btnRecordEmergencyDump" class="mt-3 text-xs bg-purple-600 hover:bg-purple-500 text-white font-bold py-1.5 px-3 rounded-lg shadow">
+              Ghi nhận ca đột xuất này vào thành tích (+1)
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: BẢNG PHONG THẦN & PHẠT TIỀN (LEADERBOARD) -->
+    <section id="tab-leaderboard" class="tab-content hidden space-y-4">
+      <!-- Room Fund Goal Card -->
+      <div class="glass-card rounded-2xl p-5 border border-amber-500/30">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h3 class="font-bold text-white text-base flex items-center gap-2">
+              <span id="fundGoalIconDisplay">🍲</span> <span id="fundGoalNameDisplay">Quỹ Ăn Lẩu Cuối Tháng</span>
+            </h3>
+            <p class="text-xs text-slate-400">Tiền phạt từ các thánh quên đổ rác</p>
+          </div>
+          <div class="text-right">
+            <div id="fundTotalDisplay" class="text-xl font-black text-amber-400">40.000đ</div>
+            <span class="text-[10px] text-slate-400" id="fundGoalAmountDisplay">Mục tiêu: 150.000đ</span>
+          </div>
+        </div>
+
+        <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden mt-2">
+          <div id="fundProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-500" style="width: 26%"></div>
+        </div>
+      </div>
+
+      <!-- Top Honor & Top Báo -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Bảng Vinh Danh -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2 mb-3">
+            <i data-lucide="trophy" class="w-4 h-4"></i>
+            Chiến Thần Đổ Rác (Chăm nhất)
+          </h3>
+          <div id="honorListContainer" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Sổ Nợ / Con Báo Phòng -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-bold text-red-400 text-sm flex items-center gap-2 mb-3">
+            <i data-lucide="skull" class="w-4 h-4"></i>
+            Sổ Nợ / Con Báo Của Phòng
+          </h3>
+          <div id="debtListContainer" class="space-y-2">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- History Dump Log -->
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-white text-base flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
+            Nhật ký lịch sử đổ rác
+          </h3>
+          <span class="text-xs text-slate-400" id="logCountText">3 bản ghi</span>
+        </div>
+        <div id="historyLogsContainer" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: CÀI ĐẶT & 0Đ (SETTINGS & ZERO COST GUIDE) -->
+    <section id="tab-settings" class="tab-content hidden space-y-4">
+      <!-- Room Basic Settings -->
+      <div class="glass-card rounded-2xl p-5">
+        <h3 class="font-bold text-white text-base flex items-center gap-2 mb-4">
+          <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+          Cấu hình phòng KTX
+        </h3>
+
+        <div class="space-y-3.5 text-sm">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Tên phòng:</label>
+            <input type="text" id="settingRoomName" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="VD: Phòng 402 - Biệt Đội KTX">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Khẩu hiệu / Slogan phòng:</label>
+            <input type="text" id="settingRoomSlogan" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="VD: Ai quên đổ rác - Cả phòng tế sống!">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Tiền phạt 1 lần trễ:</label>
+              <select id="settingFinePerMiss" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500">
+                <option value="5000">5.000 VNĐ</option>
+                <option value="10000" selected>10.000 VNĐ</option>
+                <option value="20000">20.000 VNĐ</option>
+                <option value="50000">50.000 VNĐ (Gắt)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Giờ giới nghiêm:</label>
+              <select id="settingDeadlineHour" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500">
+                <option value="20">20:00 tối</option>
+                <option value="21">21:00 tối</option>
+                <option value="22" selected>22:00 tối</option>
+                <option value="23">23:00 khuya</option>
+              </select>
+            </div>
+          </div>
+          <button id="btnSaveRoomSettings" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow transition">
+            Lưu cài đặt phòng
+          </button>
+        </div>
+      </div>
+
+      <!-- Điều chỉnh Mục Tiêu Quỹ Chung -->
+      <div class="glass-card rounded-2xl p-5 border border-amber-500/30">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-white text-base flex items-center gap-2">
+            <span class="text-xl">🎯</span>
+            Mục Tiêu Quỹ Chung Của Phòng
+          </h3>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">Tùy chỉnh nhóm</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">
+          Tùy biến mục tiêu phòng muốn hướng tới (ăn lẩu, trà sữa, nhậu, mua đồ dùng...) để tạo động lực cho các anh em đổ rác!
+        </p>
+
+        <div class="space-y-3.5 text-sm">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Tên mục tiêu quỹ (Đổi nhóm tùy ý):</label>
+            <input type="text" id="settingFundGoalName" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="VD: Ăn lẩu cuối tháng, Uống trà sữa, Đi nhậu...">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Biểu tượng mục tiêu:</label>
+            <div id="fundIconPicker" class="flex flex-wrap gap-2 text-xl bg-slate-800/80 p-2 rounded-xl border border-slate-700">
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice selected">🍲</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🧋</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🍻</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🍕</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🍗</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🛒</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🎉</span>
+              <span class="cursor-pointer p-1.5 rounded-lg hover:bg-slate-700 fund-icon-choice">🧼</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Số tiền mục tiêu (VNĐ):</label>
+            <div class="flex gap-2">
+              <input type="number" id="settingFundGoalAmount" step="10000" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500" placeholder="150000">
+              <select id="quickSelectGoalAmount" class="bg-slate-800 border border-slate-700 rounded-xl px-2 py-2 text-xs text-slate-300 focus:outline-none">
+                <option value="">Chọn nhanh</option>
+                <option value="100000">100.000đ</option>
+                <option value="150000">150.000đ</option>
+                <option value="200000">200.000đ</option>
+                <option value="300000">300.000đ</option>
+                <option value="500000">500.000đ</option>
+                <option value="1000000">1.000.000đ</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="btnSaveFundGoal" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow transition">
+            Lưu mục tiêu quỹ
+          </button>
+        </div>
+      </div>
+
+      <!-- Backup & Restore -->
+      <div class="glass-card rounded-2xl p-5">
+        <h3 class="font-bold text-white text-base flex items-center gap-2 mb-3">
+          <i data-lucide="database" class="w-4 h-4 text-slate-400"></i>
+          Sao lưu dữ liệu phòng
+        </h3>
+        <div class="flex flex-wrap gap-2">
+          <button id="btnExportData" class="py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-700">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Tải bản sao lưu (JSON)
+          </button>
+          <label class="py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-700 cursor-pointer">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Khôi phục dữ liệu
+            <input type="file" id="importFileInput" accept=".json" class="hidden">
+          </label>
+          <button id="btnResetDefault" class="py-2 px-4 rounded-xl bg-red-950/40 hover:bg-red-900/50 text-red-400 text-xs font-semibold flex items-center gap-1.5 border border-red-800/40">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Đặt lại mặc định
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR (Mobile First) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800">
+    <div class="max-w-md mx-auto grid grid-cols-5 py-1">
+      <button onclick="switchTab('today')" class="nav-btn active flex flex-col items-center py-2 text-emerald-400 transition" data-tab="today">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Hôm nay</span>
+      </button>
+      <button onclick="switchTab('schedule')" class="nav-btn flex flex-col items-center py-2 text-slate-400 hover:text-slate-200 transition" data-tab="schedule">
+        <i data-lucide="calendar" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Lịch trực</span>
+      </button>
+      <button onclick="switchTab('roulette')" class="nav-btn flex flex-col items-center py-2 text-slate-400 hover:text-slate-200 transition" data-tab="roulette">
+        <i data-lucide="disc" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Vòng quay</span>
+      </button>
+      <button onclick="switchTab('leaderboard')" class="nav-btn flex flex-col items-center py-2 text-slate-400 hover:text-slate-200 transition" data-tab="leaderboard">
+        <i data-lucide="trophy" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Sổ nợ</span>
+      </button>
+      <button onclick="switchTab('settings')" class="nav-btn flex flex-col items-center py-2 text-slate-400 hover:text-slate-200 transition" data-tab="settings">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Cài đặt</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL: CHECK-IN BẰNG CHỨNG ĐỔ RÁC -->
+  <div id="modalCheckIn" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <span>📸</span> Xác nhận đã đổ rác
+        </h3>
+        <button onclick="closeModal('modalCheckIn')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Đăng kèm ảnh bằng chứng thùng rác sạch bóng để cả phòng không bắt bẻ được nhé!
+      </p>
+
+      <!-- Proof Photo Upload -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Ảnh bằng chứng (tùy chọn):</label>
+        <div class="flex items-center space-x-3">
+          <label class="flex-1 py-3 px-3 rounded-xl border-2 border-dashed border-slate-700 hover:border-emerald-500 cursor-pointer text-center text-xs text-slate-400 transition bg-slate-800/50">
+            <i data-lucide="camera" class="w-5 h-5 mx-auto mb-1 text-emerald-400"></i>
+            <span id="proofPhotoLabel">Chụp / Chọn ảnh rác</span>
+            <input type="file" id="inputProofPhoto" accept="image/*" capture="environment" class="hidden">
+          </label>
+          <div id="proofThumbnailContainer" class="hidden relative w-16 h-16 rounded-xl overflow-hidden border border-slate-700">
+            <img id="proofThumbnail" class="w-full h-full object-cover" alt="Preview">
+            <button id="btnRemoveProofPhoto" class="absolute top-0.5 right-0.5 bg-red-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center">&times;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Ghi chú vui (tùy chọn):</label>
+        <input type="text" id="inputProofNote" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500" placeholder="VD: Thùng rác sạch bóng loáng!">
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeModal('modalCheckIn')" class="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">Hủy</button>
+        <button id="btnConfirmCheckIn" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 text-slate-950 text-xs font-black shadow-lg shadow-emerald-500/30">
+          XÁC NHẬN ĐỔ XONG!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: RÉO TÊN VÀO NHÓM ZALO -->
+  <div id="modalRemindZalo" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <span>📢</span> Réo Tên Cà Khịa Vào Nhóm
+        </h3>
+        <button onclick="closeModal('modalRemindZalo')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Chọn một văn mẫu cà khịa dưới đây để nhắc nhở người trực nhật:</p>
+
+      <div id="zaloTemplatesContainer" class="space-y-2">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="closeModal('modalRemindZalo')" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ĐỔI CA TRỰC / NHỜ ĐỔ HỘ -->
+  <div id="modalSwapDuty" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <span>🔄</span> Đổi Ca Trực Hôm Nay
+        </h3>
+        <button onclick="closeModal('modalSwapDuty')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Bạn bận đi hẹn hò hoặc có việc đột xuất? Nhờ người anh em chí cốt nào trong phòng gánh hộ hôm nay:
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Chuyển lượt hôm nay cho:</label>
+        <select id="selectSwapTarget" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeModal('modalSwapDuty')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Hủy</button>
+        <button id="btnConfirmSwap" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black shadow">
+          Xác nhận đổi ca
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THÊM / SỬA THÀNH VIÊN -->
+  <div id="modalMemberForm" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <h3 id="modalMemberTitle" class="font-bold text-white text-base">Thêm Thành Viên Mới</h3>
+        <button onclick="closeModal('modalMemberForm')" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <input type="hidden" id="inputMemberId">
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Họ và tên:</label>
+        <input type="text" id="inputMemberName" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500" placeholder="VD: Trần Văn Nam">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Biệt danh hài hước:</label>
+        <input type="text" id="inputMemberNickname" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500" placeholder="VD: Nam Ngủ Ngày, Báo Thủ...">
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block text-xs font-semibold text-slate-300">Avatar đại diện (Tự động độc nhất):</label>
+          <button id="btnRandomizeUniqueEmoji" type="button" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1">
+            🎲 Đổi hình khác
+          </button>
+        </div>
+        <div class="flex items-center space-x-3 p-2.5 bg-slate-800/80 rounded-xl border border-slate-700 mb-2">
+          <span id="uniqueAvatarPreview" class="text-3xl p-1.5 bg-slate-900 rounded-xl border border-emerald-500 shadow-md">🤠</span>
+          <div>
+            <div class="text-xs font-bold text-white" id="avatarPreviewStatus">Hình độc nhất của bạn</div>
+            <div class="text-[10px] text-emerald-400">✨ Không trùng lặp với ai trong phòng!</div>
+          </div>
+        </div>
+        <div id="emojiPickerList" class="flex flex-wrap gap-1.5 text-lg bg-slate-800/50 p-2 rounded-xl border border-slate-700/60 max-h-28 overflow-y-auto">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Chọn ngày đổ rác -->
+      <div class="p-3 bg-slate-800/80 rounded-xl border border-slate-700 space-y-2">
+        <label class="block text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          Chọn ngày đổ rác / Ca trực đầu tiên:
+        </label>
+        <div>
+          <input type="date" id="inputMemberDutyDate" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-emerald-500 font-semibold cursor-pointer">
+        </div>
+        <div class="flex items-center gap-1.5 pt-0.5">
+          <span class="text-[10px] text-slate-400">Chọn nhanh:</span>
+          <button type="button" onclick="window.setQuickDutyDate(0)" class="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 text-[10px] font-semibold">Hôm nay</button>
+          <button type="button" onclick="window.setQuickDutyDate(1)" class="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 text-[10px] font-semibold">Ngày mai</button>
+          <button type="button" onclick="window.setQuickDutyDate(2)" class="px-2 py-0.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 text-[10px] font-semibold">Ngày kia</button>
+        </div>
+        <p class="text-[10px] text-slate-400 italic">
+          💡 Hệ thống sẽ tự động xếp bạn vào đúng ngày này trên Lịch trực và luân phiên xoay vòng cho các ngày sau!
+        </p>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeModal('modalMemberForm')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Hủy</button>
+        <button id="btnSaveMember" class="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow">
+          Lưu thành viên
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastNotification" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-800/95 border border-slate-700 text-white text-xs shadow-2xl flex items-center space-x-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+    <span id="toastIcon">✨</span>
+    <span id="toastMessage">Thông báo</span>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script type="module">
+    // SOUND EFFECTS VIA WEB AUDIO API (100% Free, Zero-dependency)
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx && typeof window !== 'undefined') {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) this.ctx = new AudioContextClass();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playTick() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.05);
+      }
+      playSuccess() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.2, now + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.35);
+        });
+      }
+      playAlarm() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(160, now + 0.35);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+    }
+    const sound = new SoundEngine();
+
+    // TOAST HELPER
+    function showToast(message, icon = '✨') {
+      const el = document.getElementById('toastNotification');
+      document.getElementById('toastIcon').textContent = icon;
+      document.getElementById('toastMessage').textContent = message;
+      el.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+      el.classList.add('opacity-100', 'translate-y-0');
+      sound.playTick();
+      setTimeout(() => {
+        el.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+        el.classList.remove('opacity-100', 'translate-y-0');
+      }, 3000);
+    }
+
+    // STATE INITIALIZATION
+    const STORAGE_KEY = 'CHAM_CONG_DO_RAC_DATA_V2';
+    const FIREBASE_KEY = 'CHAM_CONG_DO_RAC_FB_CONFIG';
+
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    const defaultAppData = {
+      members: [
+        { id: 'm1', name: 'Nguyễn Văn Hùng', nickname: 'Hùng Hăng Hái', avatar: '🤠', streak: 4, totalDumps: 14, missedDumps: 0, finesOwed: 0, isActive: true },
+        { id: 'm2', name: 'Lê Minh Tuấn', nickname: 'Tuấn Báo Thủ', avatar: '🦹‍♂️', streak: 0, totalDumps: 6, missedDumps: 3, finesOwed: 30000, isActive: true },
+        { id: 'm3', name: 'Trần Đức Anh', nickname: 'Đức Ngủ Ngày', avatar: '🦥', streak: 2, totalDumps: 9, missedDumps: 1, finesOwed: 10000, isActive: true },
+        { id: 'm4', name: 'Hoàng Văn Nam', nickname: 'Nam Anime', avatar: '🧙‍♂️', streak: 5, totalDumps: 16, missedDumps: 0, finesOwed: 0, isActive: true },
+      ],
+      settings: {
+        roomName: 'Phòng 402 - Biệt Đội KTX',
+        roomSlogan: 'Ai quên đổ rác - Cả phòng tế sống!',
+        finePerMiss: 10000,
+        deadlineHour: 22,
+        fundBalance: 40000,
+        fundGoalName: 'Ăn lẩu cuối tháng',
+        fundGoalIcon: '🍲',
+        fundGoalAmount: 150000,
+        rotationStartDate: getTodayString(),
+        rotationOrder: ['m1', 'm2', 'm3', 'm4']
+      },
+      logs: [
+        { id: 'log-1', date: getTodayString(), memberId: 'm1', memberName: 'Nguyễn Văn Hùng', status: 'pending' },
+        { id: 'log-0', date: '2026-11-21', memberId: 'm4', memberName: 'Hoàng Văn Nam', status: 'completed', completedAt: '2026-11-21T21:15:00', note: 'Đã vứt sạch thùng!' }
+      ]
+    };
+
+    let appState = (() => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return { ...defaultAppData, ...JSON.parse(raw) };
+      } catch (e) {
+        console.error('Error loading local state', e);
+      }
+      return defaultAppData;
+    })();
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        syncWithFirebase();
+      } catch (e) {
+        console.error('Failed saving state', e);
+      }
+    }
+
+    // FIREBASE REALTIME SYNC (Optional 0đ)
+    let firebaseDb = null;
+    let firebaseUnsubscribe = null;
+
+    async function setupFirebase(configObj) {
+      if (!configObj) return;
+      try {
+        const { initializeApp, getApps } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        
+        let app = getApps().length ? getApps()[0] : initializeApp(configObj);
+        firebaseDb = getFirestore(app);
+
+        // Subscribe to live room doc
+        const roomDocRef = doc(firebaseDb, 'ktx_trash_rooms', 'room_main');
+        
+        if (firebaseUnsubscribe) firebaseUnsubscribe();
+
+        firebaseUnsubscribe = onSnapshot(roomDocRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.members && data.settings && data.logs) {
+              appState = {
+                members: data.members,
+                settings: data.settings,
+                logs: data.logs
+              };
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+              renderAll();
+              document.getElementById('syncBanner').classList.remove('hidden');
+            }
+          }
+        }, (err) => {
+          console.warn('Firebase sync listener warning:', err);
+        });
+
+        showToast('Kết nối Firebase thành công!', '🔥');
+      } catch (err) {
+        console.error('Firebase setup failed:', err);
+        showToast('Lỗi cấu hình Firebase, vui lòng kiểm tra lại!', '⚠️');
+      }
+    }
+
+    async function syncWithFirebase() {
+      if (!firebaseDb) return;
+      try {
+        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const roomDocRef = doc(firebaseDb, 'ktx_trash_rooms', 'room_main');
+        await setDoc(roomDocRef, {
+          members: appState.members,
+          settings: appState.settings,
+          logs: appState.logs,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+      } catch (err) {
+        console.warn('Sync push error:', err);
+      }
+    }
+
+    // ROTATION & DUTY CALCULATION
+    function getDutyMemberForDate(dateStr) {
+      const activeIds = appState.settings.rotationOrder.filter(id => {
+        const m = appState.members.find(x => x.id === id);
+        return m && m.isActive;
+      });
+      if (activeIds.length === 0) return null;
+
+      const startDate = new Date(appState.settings.rotationStartDate || getTodayString());
+      const targetDate = new Date(dateStr);
+      const diffTime = targetDate.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      const index = ((diffDays % activeIds.length) + activeIds.length) % activeIds.length;
+      const memberId = activeIds[index];
+      return appState.members.find(m => m.id === memberId) || null;
+    }
+
+    function getTodayLog() {
+      const today = getTodayString();
+      let log = appState.logs.find(l => l.date === today);
+      if (!log) {
+        const dutyPerson = getDutyMemberForDate(today);
+        log = {
+          id: `log-${Date.now()}`,
+          date: today,
+          memberId: dutyPerson ? dutyPerson.id : '',
+          memberName: dutyPerson ? dutyPerson.name : 'Chưa phân công',
+          status: 'pending'
+        };
+        appState.logs.unshift(log);
+        saveState();
+      }
+      return log;
+    }
+
+    // RENDER FUNCTIONS
+    function renderHeader() {
+      document.getElementById('headerRoomName').textContent = appState.settings.roomName;
+      document.getElementById('headerSlogan').textContent = appState.settings.roomSlogan;
+      document.getElementById('headerFund').textContent = `${(appState.settings.fundBalance || 0).toLocaleString('vi-VN')}đ`;
+      document.getElementById('statFineAmount').textContent = `${(appState.settings.finePerMiss || 10000).toLocaleString('vi-VN')}đ`;
+      document.getElementById('statFundAmount').textContent = `${(appState.settings.fundBalance || 0).toLocaleString('vi-VN')}đ`;
+    }
+
+    function renderToday() {
+      const today = getTodayString();
+      const log = getTodayLog();
+      const member = appState.members.find(m => m.id === log.memberId) || getDutyMemberForDate(today);
+
+      const d = new Date();
+      const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      document.getElementById('todayDateDisplay').textContent = `${dayNames[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+
+      if (member) {
+        document.getElementById('todayAvatar').textContent = member.avatar || '🤠';
+        document.getElementById('todayName').textContent = member.name;
+        document.getElementById('todayNickname').textContent = `"${member.nickname || 'Thành viên'}"`;
+        document.getElementById('todayStreakCount').textContent = `${member.streak || 0} ca liên tiếp`;
+      }
+
+      const todayCard = document.getElementById('todayCard');
+      const statusBadge = document.getElementById('todayStatusBadge');
+      const deadlineText = document.getElementById('todayDeadlineTime');
+      const completedBox = document.getElementById('todayCompletedBox');
+      const btnCheckIn = document.getElementById('btnCheckIn');
+
+      deadlineText.textContent = `${String(appState.settings.deadlineHour).padStart(2, '0')}:00`;
+
+      // Check deadline status
+      const now = new Date();
+      const deadline = new Date();
+      deadline.setHours(appState.settings.deadlineHour, 0, 0, 0);
+      const isPastDeadline = now > deadline;
+
+      if (log.status === 'completed') {
+        todayCard.className = 'glass-card rounded-2xl p-6 text-center relative overflow-hidden transition-all duration-300 neon-border-green';
+        statusBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1';
+        statusBadge.innerHTML = '<span>✅</span> Đã hoàn thành!';
+        
+        btnCheckIn.classList.add('opacity-50', 'pointer-events-none');
+        btnCheckIn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i><span>ĐÃ ĐỔ RÁC HÔM NAY RỒI</span>';
+
+        completedBox.classList.remove('hidden');
+        if (log.completedAt) {
+          const cTime = new Date(log.completedAt);
+          document.getElementById('completedTimeText').textContent = `${String(cTime.getHours()).padStart(2, '0')}:${String(cTime.getMinutes()).padStart(2, '0')}`;
+        }
+        if (log.note) {
+          document.getElementById('completedNoteText').textContent = `"${log.note}"`;
+          document.getElementById('completedNoteText').classList.remove('hidden');
+        } else {
+          document.getElementById('completedNoteText').classList.add('hidden');
+        }
+        if (log.proofImage) {
+          document.getElementById('completedImagePreview').src = log.proofImage;
+          document.getElementById('completedImageContainer').classList.remove('hidden');
+        } else {
+          document.getElementById('completedImageContainer').classList.add('hidden');
+        }
+      } else if (isPastDeadline && log.status !== 'completed') {
+        // Overdue!
+        todayCard.className = 'glass-card rounded-2xl p-6 text-center relative overflow-hidden transition-all duration-300 neon-border-red';
+        statusBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 flex items-center space-x-1';
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping mr-1"></span> Quá hạn! Phạt tiền!';
+        completedBox.classList.add('hidden');
+        btnCheckIn.classList.remove('opacity-50', 'pointer-events-none');
+        btnCheckIn.innerHTML = '<i data-lucide="alert-triangle" class="w-5 h-5"></i><span>NỘP PHẠT & ĐỔ BÙ NGAY!</span>';
+      } else {
+        // Pending
+        todayCard.className = 'glass-card rounded-2xl p-6 text-center relative overflow-hidden transition-all duration-300';
+        statusBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center space-x-1';
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping mr-1"></span> Chưa đổ rác!';
+        completedBox.classList.add('hidden');
+        btnCheckIn.classList.remove('opacity-50', 'pointer-events-none');
+        btnCheckIn.innerHTML = '<i data-lucide="check-circle-2" class="w-5 h-5"></i><span>TÔI ĐÃ ĐỔ RÁC RỒI! (Check-in)</span>';
+      }
+
+      // Quick stats
+      const sortedByStreak = [...appState.members].sort((a,b) => (b.streak || 0) - (a.streak || 0));
+      if (sortedByStreak.length > 0 && sortedByStreak[0].streak > 0) {
+        document.getElementById('statBestStreak').textContent = `${sortedByStreak[0].nickname || sortedByStreak[0].name} (${sortedByStreak[0].streak} ca)`;
+      } else {
+        document.getElementById('statBestStreak').textContent = 'Chưa có';
+      }
+
+      const sortedByMissed = [...appState.members].sort((a,b) => (b.missedDumps || 0) - (a.missedDumps || 0));
+      if (sortedByMissed.length > 0 && sortedByMissed[0].missedDumps > 0) {
+        document.getElementById('statTopMissed').textContent = `${sortedByMissed[0].nickname || sortedByMissed[0].name} (${sortedByMissed[0].missedDumps} lần)`;
+      } else {
+        document.getElementById('statTopMissed').textContent = 'Chưa có ai';
+      }
+
+      lucide.createIcons();
+    }
+
+    // TIMER COUNTDOWN LOOP
+    function updateCountdown() {
+      const now = new Date();
+      const deadline = new Date();
+      deadline.setHours(appState.settings.deadlineHour, 0, 0, 0);
+
+      const diff = deadline.getTime() - now.getTime();
+      const label = document.getElementById('countdownLabel');
+      const progressBar = document.getElementById('countdownProgressBar');
+
+      if (diff <= 0) {
+        label.textContent = 'ĐÃ QUÁ HẠN!';
+        label.className = 'font-bold text-red-400';
+        progressBar.style.width = '100%';
+        progressBar.className = 'h-full bg-red-500';
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        label.textContent = `Còn ${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        label.className = 'font-bold text-amber-400';
+
+        // Calculate progress in current day
+        const dayStart = new Date();
+        dayStart.setHours(6, 0, 0, 0); // from 6:00 AM
+        const totalDuration = deadline.getTime() - dayStart.getTime();
+        const elapsed = now.getTime() - dayStart.getTime();
+        const pct = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+        progressBar.style.width = `${pct}%`;
+      }
+    }
+
+    // CALENDAR ENGINE (WEEK & MONTH VIEW)
+    let currentCalView = 'week';
+    let calAnchorDate = new Date();
+
+    function getStartOfWeek(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday is start
+      return new Date(date.setDate(diff));
+    }
+
+    function renderSchedule() {
+      if (currentCalView === 'week') {
+        renderWeekView();
+      } else {
+        renderMonthView();
+      }
+      renderMemberList();
+      lucide.createIcons();
+    }
+
+    function renderWeekView() {
+      document.getElementById('calendarWeekContainer').classList.remove('hidden');
+      document.getElementById('calendarMonthContainer').classList.add('hidden');
+      document.getElementById('calDateDetailBox').classList.add('hidden');
+
+      const start = getStartOfWeek(calAnchorDate);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      const title = `${start.getDate()}/${start.getMonth()+1} - ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}`;
+      document.getElementById('calCurrentPeriodTitle').textContent = title;
+
+      const headerEl = document.getElementById('calendarWeekHeader');
+      const gridEl = document.getElementById('calendarWeekGrid');
+      headerEl.innerHTML = '';
+      gridEl.innerHTML = '';
+
+      const dayShortNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
+      const todayStr = getTodayString();
+
+      for (let i = 0; i < 7; i++) {
+        const curr = new Date(start);
+        curr.setDate(start.getDate() + i);
+        const dateStr = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}-${String(curr.getDate()).padStart(2,'0')}`;
+        const duty = getDutyMemberForDate(dateStr);
+        const log = appState.logs.find(l => l.date === dateStr);
+        const isToday = dateStr === todayStr;
+
+        // Header column (Day name + Circle date like Google Calendar)
+        const th = document.createElement('div');
+        th.className = 'flex flex-col items-center py-1';
+        th.innerHTML = `
+          <span class="text-[11px] font-semibold ${isToday ? 'text-emerald-400 font-bold' : (i === 6 ? 'text-red-400' : 'text-slate-400')}">${dayShortNames[i]}</span>
+          <span class="w-7 h-7 mt-0.5 rounded-full flex items-center justify-center text-xs font-black ${isToday ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/40 ring-2 ring-emerald-300' : 'text-slate-200'}">${curr.getDate()}</span>
+        `;
+        headerEl.appendChild(th);
+
+        // Body column slot
+        let cardBg = 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:border-slate-500';
+        let statusBadge = '<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/60 text-slate-400">Sắp tới</span>';
+        let timeText = '22:00';
+
+        if (log && log.status === 'completed') {
+          cardBg = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300 hover:border-emerald-400';
+          statusBadge = '<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">Xong ✅</span>';
+          if (log.completedAt) {
+            const ct = new Date(log.completedAt);
+            timeText = `${String(ct.getHours()).padStart(2,'0')}:${String(ct.getMinutes()).padStart(2,'0')}`;
+          }
+        } else if (log && log.status === 'missed') {
+          cardBg = 'bg-red-950/40 border-red-500/50 text-red-300 hover:border-red-400';
+          statusBadge = '<span class="text-[9px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">Phạt 💸</span>';
+        } else if (isToday) {
+          cardBg = 'bg-amber-950/40 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/50';
+          statusBadge = '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-300 font-bold animate-pulse">Hôm nay</span>';
+        }
+
+        const col = document.createElement('div');
+        col.className = 'p-1 flex flex-col justify-start min-h-[140px]';
+        col.innerHTML = `
+          <div class="p-2 rounded-xl border text-left cursor-pointer transition transform hover:scale-102 h-full flex flex-col justify-between ${cardBg}">
+            <div>
+              <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                <span>🕒 ${timeText}</span>
+                ${statusBadge}
+              </div>
+              <div class="text-2xl select-none my-1">${duty ? duty.avatar : '❓'}</div>
+              <div class="font-extrabold text-xs text-white truncate">${duty ? (duty.nickname || duty.name.split(' ').pop()) : 'Chưa xếp'}</div>
+              <div class="text-[10px] text-slate-400 truncate">${duty ? duty.name : ''}</div>
+            </div>
+            ${log && log.note ? `<div class="mt-1 text-[9px] text-slate-400 italic truncate">"${log.note}"</div>` : ''}
+          </div>
+        `;
+        col.onclick = () => {
+          showDateDetail(dateStr, duty, log, isToday);
+        };
+        gridEl.appendChild(col);
+      }
+    }
+
+    function renderMonthView() {
+      document.getElementById('calendarWeekContainer').classList.add('hidden');
+      document.getElementById('calendarMonthContainer').classList.remove('hidden');
+
+      const year = calAnchorDate.getFullYear();
+      const month = calAnchorDate.getMonth();
+      document.getElementById('calCurrentPeriodTitle').textContent = `Tháng ${month + 1}, ${year}`;
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const totalDays = lastDay.getDate();
+
+      let startDayOfWeek = firstDay.getDay() - 1;
+      if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+      const grid = document.getElementById('calendarMonthGrid');
+      grid.innerHTML = '';
+      const todayStr = getTodayString();
+
+      // Empty lead days from previous month
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      for (let i = startDayOfWeek - 1; i >= 0; i--) {
+        const prevDay = prevMonthLastDay - i;
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'min-h-[75px] p-1.5 bg-slate-900/30 text-slate-600 text-xs select-none opacity-40';
+        emptyCell.innerHTML = `<span class="font-bold">${prevDay}</span>`;
+        grid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const duty = getDutyMemberForDate(dateStr);
+        const log = appState.logs.find(l => l.date === dateStr);
+        const isToday = dateStr === todayStr;
+
+        let pillClass = 'bg-slate-800 text-slate-300 border border-slate-700/60';
+        let statusIcon = '';
+        if (log && log.status === 'completed') {
+          pillClass = 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/40';
+          statusIcon = '✅';
+        } else if (log && log.status === 'missed') {
+          pillClass = 'bg-red-950/70 text-red-300 border border-red-500/40';
+          statusIcon = '💸';
+        } else if (isToday) {
+          pillClass = 'bg-amber-950/80 text-amber-300 border border-amber-500/60 font-bold';
+          statusIcon = '⏳';
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `min-h-[75px] p-1.5 flex flex-col justify-between cursor-pointer transition hover:bg-slate-800/50 ${isToday ? 'bg-emerald-950/20 ring-1 ring-inset ring-emerald-500/40' : 'bg-slate-900/40'}`;
+        cell.innerHTML = `
+          <div class="flex items-center justify-between mb-1">
+            <span class="${isToday ? 'w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center text-[10px] font-black' : 'text-xs font-bold text-slate-300'}">${day}</span>
+            ${isToday ? '<span class="text-[9px] font-bold text-emerald-400">Hôm nay</span>' : ''}
+          </div>
+          <!-- Google Calendar event pill -->
+          <div class="p-1 rounded-md text-[10px] font-semibold truncate flex items-center justify-between space-x-1 shadow-sm ${pillClass}">
+            <span class="truncate flex items-center gap-1">
+              <span>${duty ? duty.avatar : ''}</span>
+              <span class="truncate">${duty ? (duty.nickname || duty.name.split(' ').pop()) : ''}</span>
+            </span>
+            <span class="text-[9px]">${statusIcon}</span>
+          </div>
+        `;
+        cell.onclick = () => {
+          showDateDetail(dateStr, duty, log, isToday);
+        };
+        gridEl.appendChild(cell);
+      }
+    }
+
+    let currentDetailDateStr = '';
+
+    function showDateDetail(dateStr, duty, log, isToday) {
+      currentDetailDateStr = dateStr;
+      const box = document.getElementById('calDateDetailBox');
+      box.classList.remove('hidden');
+      const [y, m, d] = dateStr.split('-');
+      document.getElementById('calDetailDate').textContent = `${d}/${m}/${y} ${isToday ? '(Hôm nay)' : ''}`;
+      
+      let statusText = 'Chưa đến lượt';
+      let statusClass = 'bg-slate-800 text-slate-300 border border-slate-700';
+      if (log && log.status === 'completed') {
+        statusText = 'Đã hoàn thành ✅';
+        statusClass = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      } else if (log && log.status === 'missed') {
+        statusText = 'Bị phạt vì quên 💸';
+        statusClass = 'bg-red-500/20 text-red-400 border border-red-500/30';
+      } else if (isToday) {
+        statusText = 'Đang chờ đổ rác hôm nay';
+        statusClass = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      }
+      
+      const statusEl = document.getElementById('calDetailStatus');
+      statusEl.textContent = statusText;
+      statusEl.className = `px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusClass}`;
+
+      document.getElementById('calDetailAvatar').textContent = duty ? duty.avatar : '❓';
+      document.getElementById('calDetailName').textContent = duty ? duty.name : 'Chưa có phân công';
+      document.getElementById('calDetailNickname').textContent = duty ? `"${duty.nickname || ''}"` : '';
+
+      // Populate reassign dropdown
+      const sel = document.getElementById('selectReassignDutyMember');
+      if (sel) {
+        sel.innerHTML = '';
+        appState.members.filter(m => m.isActive).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = `${m.avatar} ${m.name} (${m.nickname})`;
+          if (duty && m.id === duty.id) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+      lucide.createIcons();
+    }
+
+    function reassignDutyDateToMember(dateStr, memberId) {
+      const activeIds = appState.settings.rotationOrder.filter(id => {
+        const m = appState.members.find(x => x.id === id);
+        return m && m.isActive;
+      });
+      if (activeIds.length === 0) return;
+
+      const startDate = new Date(appState.settings.rotationStartDate || getTodayString());
+      const targetDate = new Date(dateStr);
+      const diffTime = targetDate.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const targetIdx = ((diffDays % activeIds.length) + activeIds.length) % activeIds.length;
+
+      // Re-order rotationOrder so activeIds[targetIdx] is memberId
+      const currentAtIdx = activeIds[targetIdx];
+      if (currentAtIdx && currentAtIdx !== memberId) {
+        const memberIdxInOrder = appState.settings.rotationOrder.indexOf(memberId);
+        const targetIdxInOrder = appState.settings.rotationOrder.indexOf(currentAtIdx);
+        if (memberIdxInOrder !== -1 && targetIdxInOrder !== -1) {
+          appState.settings.rotationOrder[memberIdxInOrder] = currentAtIdx;
+          appState.settings.rotationOrder[targetIdxInOrder] = memberId;
+        }
+      }
+
+      // Also update log for that date if it exists
+      let log = appState.logs.find(l => l.date === dateStr);
+      if (log && log.status !== 'completed') {
+        log.memberId = memberId;
+        const targetMember = appState.members.find(m => m.id === memberId);
+        log.memberName = targetMember ? targetMember.name : '';
+      }
+    }
+
+    function renderMemberList() {
+      const container = document.getElementById('memberListContainer');
+      container.innerHTML = '';
+
+      appState.settings.rotationOrder.forEach((memberId, idx) => {
+        const member = appState.members.find(m => m.id === memberId);
+        if (!member) return;
+
+        const el = document.createElement('div');
+        el.className = 'flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-sm';
+        el.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="w-6 text-center text-xs font-bold text-slate-400">#${idx + 1}</span>
+            <span class="text-2xl">${member.avatar}</span>
+            <div>
+              <div class="font-bold text-white text-sm">${member.name}</div>
+              <div class="text-xs text-slate-400">${member.nickname || ''}</div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1">
+            <button onclick="window.moveMemberOrder(${idx}, -1)" class="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs ${idx === 0 ? 'opacity-30 pointer-events-none' : ''}">▲</button>
+            <button onclick="window.moveMemberOrder(${idx}, 1)" class="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs ${idx === appState.settings.rotationOrder.length - 1 ? 'opacity-30 pointer-events-none' : ''}">▼</button>
+            <button onclick="window.editMember('${member.id}')" class="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs">✏️</button>
+            <button onclick="window.deleteMember('${member.id}')" class="p-1.5 rounded-lg bg-red-900/50 hover:bg-red-800 text-red-300 text-xs">🗑️</button>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    window.moveMemberOrder = function(fromIndex, direction) {
+      const toIndex = fromIndex + direction;
+      if (toIndex < 0 || toIndex >= appState.settings.rotationOrder.length) return;
+      const order = [...appState.settings.rotationOrder];
+      const temp = order[fromIndex];
+      order[fromIndex] = order[toIndex];
+      order[toIndex] = temp;
+      appState.settings.rotationOrder = order;
+      saveState();
+      renderAll();
+      showToast('Đã đổi thứ tự xoay tua!', '🔄');
+    };
+
+    window.editMember = function(id) {
+      const m = appState.members.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('modalMemberTitle').textContent = 'Sửa Thành Viên';
+      document.getElementById('inputMemberId').value = m.id;
+      document.getElementById('inputMemberName').value = m.name;
+      document.getElementById('inputMemberNickname').value = m.nickname;
+      
+      document.querySelectorAll('.emoji-choice').forEach(span => {
+        span.classList.toggle('selected', span.textContent === m.avatar);
+      });
+      openModal('modalMemberForm');
+    };
+
+    window.deleteMember = function(id) {
+      if (appState.members.length <= 2) {
+        showToast('Phòng phải có ít nhất 2 thành viên!', '⚠️');
+        return;
+      }
+      if (confirm('Bạn có chắc muốn xóa thành viên này khỏi danh sách?')) {
+        appState.members = appState.members.filter(m => m.id !== id);
+        appState.settings.rotationOrder = appState.settings.rotationOrder.filter(x => x !== id);
+        saveState();
+        renderAll();
+        showToast('Đã xóa thành viên', '🗑️');
+      }
+    };
+
+    // LEADERBOARD RENDER
+    function renderLeaderboard() {
+      // Quỹ phòng & Mục tiêu
+      const fund = appState.settings.fundBalance || 0;
+      const goal = appState.settings.fundGoalAmount || 150000;
+      const goalName = appState.settings.fundGoalName || 'Ăn lẩu cuối tháng';
+      const goalIcon = appState.settings.fundGoalIcon || '🍲';
+      document.getElementById('fundGoalIconDisplay').textContent = goalIcon;
+      document.getElementById('fundGoalNameDisplay').textContent = `Quỹ ${goalName}`;
+      document.getElementById('fundTotalDisplay').textContent = `${fund.toLocaleString('vi-VN')}đ`;
+      document.getElementById('fundGoalAmountDisplay').textContent = `Mục tiêu: ${goal.toLocaleString('vi-VN')}đ`;
+      const fundPct = Math.min(100, Math.round((fund / goal) * 100));
+      document.getElementById('fundProgressBar').style.width = `${fundPct}%`;
+
+      // Top Chăm
+      const honorEl = document.getElementById('honorListContainer');
+      honorEl.innerHTML = '';
+      const sortedHonor = [...appState.members].sort((a,b) => (b.totalDumps || 0) - (a.totalDumps || 0));
+      sortedHonor.slice(0, 4).forEach((m, i) => {
+        const medal = ['🥇', '🥈', '🥉', '🎖️'][i] || '✨';
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border border-slate-700 text-xs';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-base">${medal}</span>
+            <span class="text-lg">${m.avatar}</span>
+            <div>
+              <div class="font-bold text-white">${m.name}</div>
+              <div class="text-[10px] text-slate-400">🔥 Chuỗi: ${m.streak || 0} ca đúng hạn</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="font-bold text-emerald-400 text-sm">${m.totalDumps || 0}</span>
+            <div class="text-[10px] text-slate-400">lần đổ rác</div>
+          </div>
+        `;
+        honorEl.appendChild(row);
+      });
+
+      // Top Nợ (Con Báo Phòng)
+      const debtEl = document.getElementById('debtListContainer');
+      debtEl.innerHTML = '';
+      const sortedDebt = [...appState.members].filter(m => (m.finesOwed || 0) > 0 || (m.missedDumps || 0) > 0)
+        .sort((a,b) => (b.finesOwed || 0) - (a.finesOwed || 0));
+
+      if (sortedDebt.length === 0) {
+        debtEl.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs">Cả phòng đều ngoan, không có con báo nào! 🎉</div>';
+      } else {
+        sortedDebt.forEach((m) => {
+          const row = document.createElement('div');
+          row.className = 'flex items-center justify-between p-2.5 rounded-xl bg-red-950/20 border border-red-500/30 text-xs';
+          row.innerHTML = `
+            <div class="flex items-center space-x-2">
+              <span class="text-lg">${m.avatar}</span>
+              <div>
+                <div class="font-bold text-white">${m.name}</div>
+                <div class="text-[10px] text-red-400">Bùng: ${m.missedDumps || 0} lần</div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="text-right">
+                <span class="font-black text-red-400 text-sm">${(m.finesOwed || 0).toLocaleString('vi-VN')}đ</span>
+              </div>
+              <button onclick="window.payFine('${m.id}')" class="px-2 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] shadow" title="Đã nộp phạt vào quỹ">
+                Nộp phạt
+              </button>
+            </div>
+          `;
+          debtEl.appendChild(row);
+        });
+      }
+
+      // History Logs
+      const historyEl = document.getElementById('historyLogsContainer');
+      historyEl.innerHTML = '';
+      document.getElementById('logCountText').textContent = `${appState.logs.length} bản ghi`;
+
+      appState.logs.forEach(log => {
+        const row = document.createElement('div');
+        row.className = 'p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs space-y-1.5';
+        
+        const isDone = log.status === 'completed';
+        const isMissed = log.status === 'missed';
+
+        let badge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Chưa đổ</span>';
+        if (isDone) badge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Đã đổ ✅</span>';
+        if (isMissed) badge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">Bị phạt 💸</span>';
+
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-300">${log.date}</span>
+            ${badge}
+          </div>
+          <div class="flex items-center justify-between text-slate-400">
+            <span>Người trực: <strong class="text-white">${log.memberName}</strong></span>
+            <span>${log.completedAt ? new Date(log.completedAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) : ''}</span>
+          </div>
+          ${log.note ? `<div class="italic text-slate-400 text-[11px]">"${log.note}"</div>` : ''}
+          ${log.proofImage ? `<div class="pt-1"><img src="${log.proofImage}" class="h-20 rounded-lg border border-slate-700 object-cover cursor-pointer hover:opacity-90" onclick="window.open('${log.proofImage}')" alt="Bằng chứng"></div>` : ''}
+        `;
+        historyEl.appendChild(row);
+      });
+    }
+
+    window.payFine = function(memberId) {
+      const m = appState.members.find(x => x.id === memberId);
+      if (!m || (m.finesOwed || 0) <= 0) return;
+
+      const fineAmount = m.finesOwed;
+      if (confirm(`Xác nhận ${m.name} đã đóng ${fineAmount.toLocaleString('vi-VN')}đ tiền phạt vào quỹ phòng?`)) {
+        appState.settings.fundBalance = (appState.settings.fundBalance || 0) + fineAmount;
+        m.finesOwed = 0;
+        saveState();
+        renderAll();
+        sound.playSuccess();
+        confetti({ particleCount: 50, spread: 60 });
+        showToast(`Đã thu ${fineAmount.toLocaleString('vi-VN')}đ vào quỹ phòng!`, '💰');
+      }
+    };
+
+    // SETTINGS TAB RENDER
+    function renderSettings() {
+      document.getElementById('settingRoomName').value = appState.settings.roomName;
+      document.getElementById('settingRoomSlogan').value = appState.settings.roomSlogan;
+      document.getElementById('settingFinePerMiss').value = String(appState.settings.finePerMiss || 10000);
+      document.getElementById('settingDeadlineHour').value = String(appState.settings.deadlineHour || 22);
+
+      // Mục tiêu quỹ
+      document.getElementById('settingFundGoalName').value = appState.settings.fundGoalName || 'Ăn lẩu cuối tháng';
+      document.getElementById('settingFundGoalAmount').value = appState.settings.fundGoalAmount || 150000;
+      const currentIcon = appState.settings.fundGoalIcon || '🍲';
+      document.querySelectorAll('.fund-icon-choice').forEach(span => {
+        span.classList.toggle('selected', span.textContent === currentIcon);
+        span.classList.toggle('bg-slate-700', span.textContent === currentIcon);
+      });
+    }
+
+    function renderAll() {
+      renderHeader();
+      renderToday();
+      renderSchedule();
+      renderLeaderboard();
+      renderSettings();
+      drawRoulette();
+      lucide.createIcons();
+    }
+
+    // ROULETTE WHEEL ENGINE (Canvas 100% Native)
+    const canvas = document.getElementById('rouletteCanvas');
+    const ctx = canvas.getContext('2d');
+    let wheelAngle = 0;
+    let isSpinning = false;
+    const wheelColors = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4', '#6366f1'];
+
+    function drawRoulette() {
+      const members = appState.members.filter(m => m.isActive);
+      const count = members.length;
+      if (count === 0) return;
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = canvas.width / 2 - 8;
+      const arc = (2 * Math.PI) / count;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < count; i++) {
+        const angle = wheelAngle + i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = wheelColors[i % wheelColors.length];
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, angle, angle + arc);
+        ctx.lineTo(centerX, centerY);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#0f172a';
+        ctx.stroke();
+
+        // Draw text
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px "Plus Jakarta Sans", sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 4;
+        const displayName = `${members[i].avatar} ${members[i].nickname || members[i].name.split(' ').pop()}`;
+        ctx.fillText(displayName, radius - 15, 5);
+        ctx.restore();
+      }
+    }
+
+    function spinRoulette() {
+      if (isSpinning) return;
+      const members = appState.members.filter(m => m.isActive);
+      if (members.length < 2) {
+        showToast('Cần ít nhất 2 thành viên để quay!', '⚠️');
+        return;
+      }
+
+      isSpinning = true;
+      document.getElementById('btnSpinWheel').disabled = true;
+      document.getElementById('rouletteWinnerBox').classList.add('hidden');
+
+      const fullSpins = 5 + Math.floor(Math.random() * 5); // 5-10 full spins
+      const randomStopAngle = Math.random() * 2 * Math.PI;
+      const targetAngle = wheelAngle + fullSpins * 2 * Math.PI + randomStopAngle;
+
+      const duration = 4000; // 4 seconds
+      const startTime = performance.now();
+      const startAngle = wheelAngle;
+      let lastTickAngle = wheelAngle;
+
+      function animateSpin(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease out cubic
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        wheelAngle = startAngle + (targetAngle - startAngle) * easeOut;
+
+        // Play tick sound every slice
+        const count = members.length;
+        const arc = (2 * Math.PI) / count;
+        if (Math.abs(wheelAngle - lastTickAngle) > arc) {
+          sound.playTick();
+          lastTickAngle = wheelAngle;
+        }
+
+        drawRoulette();
+
+        if (progress < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          document.getElementById('btnSpinWheel').disabled = false;
+          
+          // Determine winner (pointer is at top: 3*PI/2)
+          const normalizedAngle = (wheelAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+          // Top pointer angle in canvas coordinate is 1.5 * PI (270 deg)
+          const pointerAngle = (1.5 * Math.PI - normalizedAngle + 2 * Math.PI) % (2 * Math.PI);
+          const winnerIndex = Math.floor(pointerAngle / arc) % count;
+          const winner = members[winnerIndex];
+
+          // Show celebration
+          sound.playSuccess();
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+
+          document.getElementById('rouletteWinnerName').textContent = `${winner.name} (${winner.nickname}) ${winner.avatar}`;
+          document.getElementById('rouletteWinnerBox').classList.remove('hidden');
+
+          document.getElementById('btnRecordEmergencyDump').onclick = () => {
+            winner.totalDumps = (winner.totalDumps || 0) + 1;
+            winner.streak = (winner.streak || 0) + 1;
+            appState.logs.unshift({
+              id: `log-${Date.now()}`,
+              date: getTodayString(),
+              memberId: winner.id,
+              memberName: winner.name,
+              status: 'completed',
+              completedAt: new Date().toISOString(),
+              note: '⚡ Ca đổ rác đột xuất từ Vòng Quay Định Mệnh!'
+            });
+            saveState();
+            renderAll();
+            showToast(`Đã cộng 1 lần đổ rác cho ${winner.nickname}!`, '✨');
+            document.getElementById('rouletteWinnerBox').classList.add('hidden');
+          };
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    // CHECK-IN SUBMISSION
+    let currentProofBase64 = '';
+
+    document.getElementById('inputProofPhoto').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        // Compress image using canvas
+        const img = new Image();
+        img.onload = function() {
+          const c = document.createElement('canvas');
+          const maxDim = 800;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = (h / w) * maxDim;
+              w = maxDim;
+            } else {
+              w = (w / h) * maxDim;
+              h = maxDim;
+            }
+          }
+          c.width = w;
+          c.height = h;
+          const cCtx = c.getContext('2d');
+          cCtx.drawImage(img, 0, 0, w, h);
+          currentProofBase64 = c.toDataURL('image/jpeg', 0.7);
+          
+          document.getElementById('proofThumbnail').src = currentProofBase64;
+          document.getElementById('proofThumbnailContainer').classList.remove('hidden');
+          document.getElementById('proofPhotoLabel').textContent = 'Đã chọn ảnh!';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('btnRemoveProofPhoto').addEventListener('click', function(e) {
+      e.preventDefault();
+      currentProofBase64 = '';
+      document.getElementById('inputProofPhoto').value = '';
+      document.getElementById('proofThumbnailContainer').classList.add('hidden');
+      document.getElementById('proofPhotoLabel').textContent = 'Chụp / Chọn ảnh rác';
+    });
+
+    document.getElementById('btnConfirmCheckIn').addEventListener('click', function() {
+      const log = getTodayLog();
+      const member = appState.members.find(m => m.id === log.memberId);
+      
+      log.status = 'completed';
+      log.completedAt = new Date().toISOString();
+      log.note = document.getElementById('inputProofNote').value.trim() || 'Đã đổ rác sạch sẽ!';
+      if (currentProofBase64) {
+        log.proofImage = currentProofBase64;
+      }
+
+      if (member) {
+        member.streak = (member.streak || 0) + 1;
+        member.totalDumps = (member.totalDumps || 0) + 1;
+      }
+
+      saveState();
+      renderAll();
+      closeModal('modalCheckIn');
+
+      sound.playSuccess();
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+      showToast('Chúc mừng! Đã check-in đổ rác thành công!', '🎉');
+    });
+
+    // ZALO REMIND TEMPLATES
+    const zaloTemplates = [
+      "🔥 Alo bạn {name} ơi! 21h30 rồi, liệu mà vác xác đi đổ rác không 22h phạt {fine} nộp quỹ lẩu phòng nhé! 🍲",
+      "🚨 CẢNH BÁO CẤP 4: Thùng rác phòng {room} đang kêu cứu. Đồng chí {name} mau vác đít đi đổ ngay kẻo vi khuẩn chiếm phòng! 🧟",
+      "⏰ Gửi người anh em {name}: Hôm nay đến lượt bạn tỏa sáng với nhiệm vụ cao cả: ĐỔ RÁC. Trễ 1 phút là {fine} nhé bạn hiền!",
+      "🗑️ Thùng rác hôm nay đầy ắp rồi {name} ơi, có cả hộp sầu riêng đấy, đi đổ ngay không cả phòng ngộp thở mất! 👃😷",
+      "💰 Thông báo tự động từ Phòng {room}: Nếu trước 22h đồng chí {name} chưa check-in đổ rác, quỹ ăn uống sẽ tự động ghi nợ {fine}!"
+    ];
+
+    function openZaloReminder() {
+      const log = getTodayLog();
+      const member = appState.members.find(m => m.id === log.memberId) || getDutyMemberForDate(getTodayString());
+      const victimName = member ? (member.nickname ? `@${member.nickname}` : member.name) : 'bạn';
+      const fineStr = `${(appState.settings.finePerMiss || 10000).toLocaleString('vi-VN')}đ`;
+      const roomStr = appState.settings.roomName;
+
+      const container = document.getElementById('zaloTemplatesContainer');
+      container.innerHTML = '';
+
+      zaloTemplates.forEach((tpl, i) => {
+        const text = tpl.replace('{name}', victimName).replace('{fine}', fineStr).replace('{room}', roomStr);
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl bg-slate-800 border border-slate-700 space-y-2';
+        card.innerHTML = `
+          <p class="text-xs text-slate-200">${text}</p>
+          <div class="flex gap-2 justify-end">
+            <button onclick="window.copyZaloText('${encodeURIComponent(text)}')" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center gap-1 shadow">
+              📋 Sao chép & Gửi Zalo
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      openModal('modalRemindZalo');
+    }
+
+    window.copyZaloText = function(encodedText) {
+      const text = decodeURIComponent(encodedText);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Đã sao chép! Mở Zalo dán vào nhóm nhé!', '📋');
+        closeModal('modalRemindZalo');
+        // Optionally try opening Zalo app
+        setTimeout(() => {
+          window.open('https://zalo.me/', '_blank');
+        }, 600);
+      }).catch(() => {
+        alert(text);
+      });
+    };
+
+    // SWAP DUTY
+    function openSwapDutyModal() {
+      const log = getTodayLog();
+      const select = document.getElementById('selectSwapTarget');
+      select.innerHTML = '';
+
+      appState.members.filter(m => m.isActive && m.id !== log.memberId).forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `${m.avatar} ${m.name} (${m.nickname})`;
+        select.appendChild(opt);
+      });
+
+      openModal('modalSwapDuty');
+    }
+
+    document.getElementById('btnConfirmSwap').addEventListener('click', function() {
+      const targetId = document.getElementById('selectSwapTarget').value;
+      const targetMember = appState.members.find(m => m.id === targetId);
+      if (!targetMember) return;
+
+      const log = getTodayLog();
+      log.memberId = targetMember.id;
+      log.memberName = targetMember.name;
+      log.note = `Đã đổi ca cho ${targetMember.nickname} gánh hộ!`;
+
+      saveState();
+      renderAll();
+      closeModal('modalSwapDuty');
+      showToast(`Đã chuyển lượt hôm nay cho ${targetMember.nickname}!`, '🔄');
+    });
+
+    // UNIQUE EMOJI ENGINE (NEVER DUPLICATE)
+    const emojiPool = [
+      '🤠', '🦹‍♂️', '🦥', '🧙‍♂️', '🐱', '🐶', '🦁', '🐼', '🦊', '🐻', 
+      '🐯', '🐨', '🐵', '🦄', '🐲', '👾', '🤖', '👻', '💩', '😎', 
+      '🤓', '🥳', '🥸', '🥷', '🧑‍🚀', '🧛‍♂️', '🧝‍♂️', '🦸‍♂️', '🤴', '🧑‍💻', 
+      '👨‍🎤', '🧑‍🍳', '🏄‍♂️', '🚴‍♂️', '🤹‍♂️', '🐙', '🦖', '🦔', '🐧', '🦩',
+      '🐺', '🐗', '🦫', '🦉', '🦜'
+    ];
+
+    let selectedEmoji = '🤠';
+
+    function getUnusedEmoji(excludeMemberId = '') {
+      const usedEmojis = new Set(
+        appState.members
+          .filter(m => m.id !== excludeMemberId)
+          .map(m => m.avatar)
+      );
+      const available = emojiPool.filter(e => !usedEmojis.has(e));
+      if (available.length > 0) {
+        return available[Math.floor(Math.random() * available.length)];
+      }
+      return emojiPool[Math.floor(Math.random() * emojiPool.length)];
+    }
+
+    function selectEmoji(emoji) {
+      selectedEmoji = emoji;
+      const preview = document.getElementById('uniqueAvatarPreview');
+      if (preview) preview.textContent = emoji;
+      renderEmojiPickerList(emoji);
+    }
+
+    function renderEmojiPickerList(selected) {
+      const container = document.getElementById('emojiPickerList');
+      if (!container) return;
+      container.innerHTML = '';
+      const currentMemberId = document.getElementById('inputMemberId').value;
+      const usedEmojis = new Set(
+        appState.members
+          .filter(m => m.id !== currentMemberId)
+          .map(m => m.avatar)
+      );
+
+      emojiPool.forEach(emoji => {
+        const isUsed = usedEmojis.has(emoji);
+        const span = document.createElement('span');
+        span.className = `cursor-pointer p-1.5 rounded-lg transition text-xl select-none ${emoji === selected ? 'bg-emerald-600 text-white shadow ring-2 ring-emerald-400' : 'hover:bg-slate-700'} ${isUsed ? 'opacity-25 pointer-events-none' : ''}`;
+        span.textContent = emoji;
+        if (isUsed) {
+          span.title = 'Đã có bạn trong phòng dùng';
+        } else {
+          span.onclick = () => {
+            selectEmoji(emoji);
+          };
+        }
+        container.appendChild(span);
+      });
+    }
+
+    document.getElementById('btnRandomizeUniqueEmoji').addEventListener('click', () => {
+      const currentMemberId = document.getElementById('inputMemberId').value;
+      const nextEmoji = getUnusedEmoji(currentMemberId);
+      selectEmoji(nextEmoji);
+      sound.playTick();
+    });
+
+    document.getElementById('inputMemberName').addEventListener('input', (e) => {
+      const isNew = !document.getElementById('inputMemberId').value;
+      if (isNew && e.target.value.trim().length === 1) {
+        const autoEmoji = getUnusedEmoji();
+        selectEmoji(autoEmoji);
+      }
+    });
+
+    window.setQuickDutyDate = function(offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const inp = document.getElementById('inputMemberDutyDate');
+      if (inp) inp.value = dateStr;
+    };
+
+    document.getElementById('btnConfirmReassignDate').addEventListener('click', () => {
+      const targetMemberId = document.getElementById('selectReassignDutyMember').value;
+      const targetMember = appState.members.find(m => m.id === targetMemberId);
+      if (!targetMember || !currentDetailDateStr) return;
+
+      reassignDutyDateToMember(currentDetailDateStr, targetMember.id);
+      saveState();
+      renderAll();
+      showDateDetail(currentDetailDateStr, targetMember, appState.logs.find(l => l.date === currentDetailDateStr), currentDetailDateStr === getTodayString());
+      sound.playSuccess();
+      showToast(`Đã chỉ định ${targetMember.nickname} trực ngày ${formatDateVN(currentDetailDateStr)}!`, '📅');
+    });
+
+    document.getElementById('btnOpenAddMember').addEventListener('click', () => {
+      document.getElementById('modalMemberTitle').textContent = 'Thêm Thành Viên Mới';
+      document.getElementById('inputMemberId').value = '';
+      document.getElementById('inputMemberName').value = '';
+      document.getElementById('inputMemberNickname').value = '';
+      window.setQuickDutyDate(1); // Default to tomorrow
+      const autoEmoji = getUnusedEmoji();
+      selectEmoji(autoEmoji);
+      openModal('modalMemberForm');
+    });
+
+    window.editMember = function(id) {
+      const m = appState.members.find(x => x.id === id);
+      if (!m) return;
+      document.getElementById('modalMemberTitle').textContent = 'Sửa Thành Viên';
+      document.getElementById('inputMemberId').value = m.id;
+      document.getElementById('inputMemberName').value = m.name;
+      document.getElementById('inputMemberNickname').value = m.nickname;
+      
+      // Find next duty date for this member
+      let foundDate = '';
+      for (let i = 0; i < 14; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        if (getDutyMemberForDate(ds)?.id === m.id) {
+          foundDate = ds;
+          break;
+        }
+      }
+      document.getElementById('inputMemberDutyDate').value = foundDate || getTodayString();
+
+      selectEmoji(m.avatar || getUnusedEmoji(m.id));
+      openModal('modalMemberForm');
+    };
+
+    document.getElementById('btnSaveMember').addEventListener('click', () => {
+      const id = document.getElementById('inputMemberId').value;
+      const name = document.getElementById('inputMemberName').value.trim();
+      const nickname = document.getElementById('inputMemberNickname').value.trim() || name.split(' ').pop();
+      const dutyDate = document.getElementById('inputMemberDutyDate').value;
+
+      if (!name) {
+        showToast('Vui lòng nhập họ tên!', '⚠️');
+        return;
+      }
+
+      if (id) {
+        // Edit
+        const m = appState.members.find(x => x.id === id);
+        if (m) {
+          m.name = name;
+          m.nickname = nickname;
+          m.avatar = selectedEmoji;
+          if (dutyDate) {
+            reassignDutyDateToMember(dutyDate, m.id);
+          }
+        }
+      } else {
+        // Add
+        const newId = `m-${Date.now()}`;
+        appState.members.push({
+          id: newId,
+          name,
+          nickname,
+          avatar: selectedEmoji,
+          streak: 0,
+          totalDumps: 0,
+          missedDumps: 0,
+          finesOwed: 0,
+          isActive: true
+        });
+        appState.settings.rotationOrder.push(newId);
+
+        if (dutyDate) {
+          reassignDutyDateToMember(dutyDate, newId);
+        }
+      }
+
+      saveState();
+      renderAll();
+      closeModal('modalMemberForm');
+      showToast('Đã lưu thành viên & lịch trực thành công!', '✅');
+    });
+
+    // CALENDAR VIEW SWITCHERS & NAVIGATION
+    document.getElementById('btnViewWeek').addEventListener('click', () => {
+      currentCalView = 'week';
+      document.getElementById('btnViewWeek').className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-emerald-600 text-white shadow transition flex items-center gap-1.5';
+      document.getElementById('btnViewMonth').className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5';
+      renderCalendar();
+      sound.playTick();
+    });
+
+    document.getElementById('btnViewMonth').addEventListener('click', () => {
+      currentCalView = 'month';
+      document.getElementById('btnViewMonth').className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-emerald-600 text-white shadow transition flex items-center gap-1.5';
+      document.getElementById('btnViewWeek').className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5';
+      renderCalendar();
+      sound.playTick();
+    });
+
+    document.getElementById('btnCalPrev').addEventListener('click', () => {
+      if (currentCalView === 'week') {
+        calAnchorDate.setDate(calAnchorDate.getDate() - 7);
+      } else {
+        calAnchorDate.setMonth(calAnchorDate.getMonth() - 1);
+      }
+      renderCalendar();
+      sound.playTick();
+    });
+
+    document.getElementById('btnCalNext').addEventListener('click', () => {
+      if (currentCalView === 'week') {
+        calAnchorDate.setDate(calAnchorDate.getDate() + 7);
+      } else {
+        calAnchorDate.setMonth(calAnchorDate.getMonth() + 1);
+      }
+      renderCalendar();
+      sound.playTick();
+    });
+
+    document.getElementById('btnCalToday').addEventListener('click', () => {
+      calAnchorDate = new Date();
+      renderCalendar();
+      sound.playTick();
+    });
+
+    // SETTINGS SAVING
+    document.getElementById('btnSaveRoomSettings').addEventListener('click', () => {
+      appState.settings.roomName = document.getElementById('settingRoomName').value.trim() || 'Phòng KTX';
+      appState.settings.roomSlogan = document.getElementById('settingRoomSlogan').value.trim();
+      appState.settings.finePerMiss = parseInt(document.getElementById('settingFinePerMiss').value, 10);
+      appState.settings.deadlineHour = parseInt(document.getElementById('settingDeadlineHour').value, 10);
+
+      saveState();
+      renderAll();
+      showToast('Đã lưu cài đặt phòng!', '💾');
+    });
+
+    // GOAL SETTINGS SAVING
+    let selectedGoalIcon = '🍲';
+    document.querySelectorAll('.fund-icon-choice').forEach(span => {
+      span.addEventListener('click', () => {
+        document.querySelectorAll('.fund-icon-choice').forEach(s => s.classList.remove('selected', 'bg-slate-700'));
+        span.classList.add('selected', 'bg-slate-700');
+        selectedGoalIcon = span.textContent;
+      });
+    });
+
+    document.getElementById('quickSelectGoalAmount').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('settingFundGoalAmount').value = e.target.value;
+      }
+    });
+
+    document.getElementById('btnSaveFundGoal').addEventListener('click', () => {
+      const name = document.getElementById('settingFundGoalName').value.trim() || 'Ăn lẩu cuối tháng';
+      const amount = parseInt(document.getElementById('settingFundGoalAmount').value, 10) || 150000;
+      appState.settings.fundGoalName = name;
+      appState.settings.fundGoalIcon = selectedGoalIcon;
+      appState.settings.fundGoalAmount = amount;
+      saveState();
+      renderAll();
+      showToast('Đã lưu mục tiêu quỹ chung!', '🎯');
+    });
+
+    // BACKUP & RESTORE
+    document.getElementById('btnExportData').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `cham_cong_do_rac_${getTodayString()}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast('Đã tải file sao lưu!', '📥');
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed.members && parsed.settings) {
+            appState = parsed;
+            saveState();
+            renderAll();
+            showToast('Khôi phục dữ liệu thành công!', '🎉');
+          } else {
+            showToast('File dữ liệu không đúng định dạng!', '❌');
+          }
+        } catch {
+          showToast('Lỗi đọc file JSON!', '❌');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btnResetDefault').addEventListener('click', () => {
+      if (confirm('Khôi phục toàn bộ về dữ liệu mẫu ban đầu?')) {
+        appState = JSON.parse(JSON.stringify(defaultAppData));
+        saveState();
+        renderAll();
+        showToast('Đã đặt lại dữ liệu mặc định!', '🔄');
+      }
+    });
+
+    // SHARE ROOM LINK EVENT
+    document.getElementById('btnShareRoomLink').addEventListener('click', () => {
+      const roomSlug = (appState.settings.roomName || 'phong-ktx')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-');
+      const shareUrl = new URL(window.location.href);
+      shareUrl.searchParams.set('room', roomSlug);
+      navigator.clipboard.writeText(shareUrl.toString()).then(() => {
+        showToast('Đã copy link! Gửi vào nhóm Zalo là cả phòng dùng chung!', '🔗');
+      }).catch(() => {
+        prompt('Copy link này gửi vào Zalo cho anh em:', shareUrl.toString());
+      });
+    });
+
+    // EVENT LISTENERS
+    document.getElementById('btnCheckIn').addEventListener('click', () => {
+      openModal('modalCheckIn');
+    });
+    document.getElementById('btnRemindZalo').addEventListener('click', openZaloReminder);
+    document.getElementById('btnSwapDuty').addEventListener('click', openSwapDutyModal);
+    document.getElementById('btnSpinWheel').addEventListener('click', spinRoulette);
+
+    document.getElementById('btnSoundToggle').addEventListener('click', function() {
+      sound.muted = !sound.muted;
+      this.classList.toggle('text-emerald-400', !sound.muted);
+      this.classList.toggle('text-slate-500', sound.muted);
+      showToast(sound.muted ? 'Đã tắt âm thanh' : 'Đã bật âm thanh', sound.muted ? '🔇' : '🔊');
+    });
+
+    // Auto check if someone missed yesterday and apply fine
+    function checkYesterdayMissed() {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+      
+      const yesterdayLog = appState.logs.find(l => l.date === yesterdayStr);
+      if (yesterdayLog && yesterdayLog.status === 'pending') {
+        yesterdayLog.status = 'missed';
+        const member = appState.members.find(m => m.id === yesterdayLog.memberId);
+        if (member) {
+          member.missedDumps = (member.missedDumps || 0) + 1;
+          member.finesOwed = (member.finesOwed || 0) + (appState.settings.finePerMiss || 10000);
+          member.streak = 0;
+        }
+        saveState();
+      }
+    }
+
+    // INIT
+    checkYesterdayMissed();
+    renderAll();
+    setInterval(updateCountdown, 1000);
+
+    // Auto connect Firebase if saved
+    const savedFb = localStorage.getItem(FIREBASE_KEY);
+    if (savedFb) {
+      try { setupFirebase(JSON.parse(savedFb)); } catch (e) {}
+    }
+
+    // Modal Helpers
+    window.openModal = function(id) {
+      document.getElementById(id).classList.remove('hidden');
+    };
+    window.closeModal = function(id) {
+      document.getElementById(id).classList.add('hidden');
+    };
+
+    // Tab Navigation
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const activeTab = document.getElementById(`tab-${tabName}`);
+      if (activeTab) activeTab.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-tab') === tabName;
+        btn.classList.toggle('text-emerald-400', isCurrent);
+        btn.classList.toggle('text-slate-400', !isCurrent);
+      });
+
+      if (tabName === 'roulette') {
+        drawRoulette();
+      }
+      lucide.createIcons();
+      sound.playTick();
+    };
+  </script>
+</body>
+</html>
